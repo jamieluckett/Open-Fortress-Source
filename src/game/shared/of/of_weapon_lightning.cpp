@@ -234,9 +234,6 @@ void CTFLightningGun::PrimaryAttack()
 		return;
 	}
 	
-	
-	
-	
 	switch ( m_iWeaponState )
 	{
 	case FT_STATE_IDLE:

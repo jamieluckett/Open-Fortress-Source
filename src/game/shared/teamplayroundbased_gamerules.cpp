@@ -3764,7 +3764,7 @@ float CTeamplayRoundBasedRules::GetRespawnWaveMaxLength( int iTeam, bool bScaleW
 {
 #if defined( OF_DLL ) || defined ( OF_CLIENT_DLL )
 	// bruh
-	if ( TFGameRules()->IsArenaGamemode() )
+	if ( TFGameRules()->IsArenaGamemode() || TFGameRules()->IsFTGamemode() )
 		return 99999;
 #endif
 

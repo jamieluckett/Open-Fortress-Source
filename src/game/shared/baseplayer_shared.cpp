@@ -267,7 +267,7 @@ void CBasePlayer::ItemPostFrame()
 	{
 #if !defined( CLIENT_DLL )
 		Assert( !IsInAVehicle() );
-		ImpulseCommands();// this will call playerUse
+		ImpulseCommands(); // this will call playerUse
 #endif
 		return;
 	}

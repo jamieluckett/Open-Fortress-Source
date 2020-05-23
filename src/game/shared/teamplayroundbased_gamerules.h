@@ -251,6 +251,9 @@ public:
 	//Koth Mode
 	virtual bool	IsInKothMode( void ) { return false; }
 
+    //Freeze Tag Mode
+    virtual bool	IsInFTMode( void ) { return false; }
+
 	//Training Mode
 	virtual bool	IsInTraining( void ) { return false; }
 	virtual bool	IsInItemTestingMode( void ) { return false; }

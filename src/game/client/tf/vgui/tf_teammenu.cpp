@@ -757,6 +757,8 @@ const char* CTFDMTeamMenu::GetGamemodeMessage(void)
 		GameType = "Infection";
 	if ( TFGameRules()->InGametype( TF_GAMETYPE_JUG ) )
 		GameType = "Juggernaught";
+	if ( TFGameRules()->InGametype( TF_GAMETYPE_FT ) )
+		GameType = "FreezeTag";
 	return GameType;
 }
 
@@ -821,6 +823,9 @@ void CTFDMTeamMenu::ShowPanel(bool bShow)
 	}
 }
 
+//-----------------------------------------------------------------------------
+// Purpose:
+//-----------------------------------------------------------------------------
 int CTFDMTeamMenu::GetGamemodeSkin( void )
 {
 	int GameType = 1;
@@ -839,7 +844,7 @@ int CTFDMTeamMenu::GetGamemodeSkin( void )
 //		GameType = "ControlPoint";
 //	if ( TFGameRules()->InGametype( TF_GAMETYPE_CTF ) )
 //		GameType = "CTF";
-	if ( TFGameRules()->InGametype( TF_GAMETYPE_ARENA ) )
+	if ( TFGameRules()->InGametype( TF_GAMETYPE_ARENA ) || TFGameRules()->InGametype( TF_GAMETYPE_FT ) )
 		GameType = 0;
 //	if ( TFGameRules()->InGametype( TF_GAMETYPE_ESC ) )
 //		GameType = "Escort";

@@ -10,6 +10,7 @@
 #endif
 
 #include "tf_weaponbase_gun.h"
+#include "tf_gamerules.h"
 #include "Sprite.h"
 
 #if defined( CLIENT_DLL )

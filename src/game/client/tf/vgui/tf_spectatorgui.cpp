@@ -110,7 +110,7 @@ void CTFSpectatorGUI::UpdateReinforcements( void )
 
 	wchar_t wLabel[128];
 	
-	if ( TFGameRules()->InStalemate() || TFGameRules()->IsArenaGamemode() )
+	if ( TFGameRules()->InStalemate() || TFGameRules()->IsArenaGamemode() || TFGameRules()->IsFTGamemode() )
 	{
 		g_pVGuiLocalize->ConstructString( wLabel, sizeof( wLabel ), g_pVGuiLocalize->Find( "#game_respawntime_stalemate" ), 0 );
 	}

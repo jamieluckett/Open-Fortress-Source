@@ -115,6 +115,7 @@ public:
 	virtual void		Precache();
 	virtual bool		IsReadyToPlay( void );
 	virtual bool		IsReadyToSpawn( void );
+	virtual bool		IsFrozen( void );
 	virtual bool		ShouldGainInstantSpawn( void );
 	virtual void		ResetScores( void );
 
@@ -462,6 +463,7 @@ public:
 	void				ManageInstagibWeapons( TFPlayerClassData_t *pData );
 	void				ManageGunGameWeapons( TFPlayerClassData_t *pData );
 	void				Manage3WaveWeapons( TFPlayerClassData_t *pData );
+	void				ManageFreezeTagWeapons(TFPlayerClassData_t *pData);
 	void				ManageClanArenaWeapons(TFPlayerClassData_t *pData);
 	void				ManageRocketArenaWeapons(TFPlayerClassData_t *pData);
 	void				ManageArsenalWeapons(TFPlayerClassData_t *pData);
@@ -518,6 +520,7 @@ public:
 	int				RestockCloak( float PowerupSize );
 	int				RestockSpecialEffects( float PowerupSize );
 	bool				OwnsWeaponID( int ID );
+	void				StateLeaveFrozen();
 
 	CNetworkVar( bool, m_bHauling );
 
@@ -550,6 +553,9 @@ public:
 	int					m_iSpreeKills;
 	int					m_iImpressiveCount;
 	CBaseEntity			*m_SuicideEntity;
+
+	// freeze tag
+	float				m_fDefrostTime;
 
 private:
 
@@ -616,6 +622,8 @@ private:
 	void				StateEnterACTIVE( void );
 	void				StateEnterOBSERVER( void );
 	void				StateThinkOBSERVER( void );
+	void				StateEnterFROZEN(void);
+	void				StateThinkFROZEN(void);
 	void				StateEnterDYING( void );
 	void				StateThinkDYING( void );
 

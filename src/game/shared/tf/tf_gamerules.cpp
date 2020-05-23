@@ -57,7 +57,7 @@
 	#include "hl2orange.spa.h"
 	#include "hltvdirector.h"
 	#include "globalstate.h"
-    #include "igameevents.h"
+	#include "igameevents.h"
 	#include "trains.h"
 	#include "pathtrack.h"
 	#include "entitylist.h"
@@ -132,6 +132,7 @@ ConVar of_arena						( "of_arena", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggle
 ConVar of_infection					( "of_infection", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Infection mode." );
 ConVar of_threewave					( "of_threewave", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Threewave." );
 ConVar of_juggernaught				( "of_juggernaught", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Juggernaught mode." );
+ConVar of_freezetag					( "of_freezetag", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Toggles Freeze Tag mode." );
 
 ConVar of_allow_allclass_pickups 	( "of_allow_allclass_pickups", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Non-Mercenary Classes can pickup dropped weapons.");
 ConVar of_allow_allclass_spawners 	( "of_allow_allclass_spawners", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Non-Mercenary Classes can pickup weapons from spawners.");
@@ -140,9 +141,13 @@ ConVar of_payload_override			( "of_payload_override", "0", FCVAR_NOTIFY | FCVAR_
 
 ConVar of_disable_healthkits		("of_disable_healthkits", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Disable Healthkits." );
 ConVar of_disable_ammopacks			("of_disable_ammopacks", "0", FCVAR_NOTIFY | FCVAR_REPLICATED, "Disable Ammopacks." );
-ConVar of_mutator			( "of_mutator", "0", FCVAR_NOTIFY | FCVAR_REPLICATED,
+ConVar of_mutator					( "of_mutator", "0", FCVAR_NOTIFY | FCVAR_REPLICATED,
 							"Defines the gamemode mutators to be used.\n List of mutators:\n 0 : Disabled\n 1 : Instagib(Railgun + Crowbar)\n 2 : Instagib(Railgun)\n 3 : Clan Arena\n 4 : Unholy Trinity\n 5 : Rocket Arena\n 6 : Gun Game",
 							true, 0, true, 7 );
+
+ConVar of_freezetag_radius			("of_freezetag_radius", "150", FCVAR_NOTIFY | FCVAR_REPLICATED, "Maximum distance away a player can defrost a frozen teammate.");
+ConVar of_freezetag_time			("of_freezetag_time", "4", FCVAR_NOTIFY | FCVAR_REPLICATED, "Time taken to defrost a frozen teammate.");
+
 
 /*	List of mutators:
 	0: Disabled
@@ -152,6 +157,7 @@ ConVar of_mutator			( "of_mutator", "0", FCVAR_NOTIFY | FCVAR_REPLICATED,
 	4: Unholy Trinity
 	5: Rocket Arena
 	6: Gun Game
+	7: Arsenal
 */
 
 ConVar of_usehl2hull		( "of_usehl2hull", "-1", FCVAR_NOTIFY | FCVAR_REPLICATED, "Use HL2 collision hull." );
@@ -698,6 +704,24 @@ void CTFLogicTDM::Spawn( void )
 }
 
 LINK_ENTITY_TO_CLASS( of_logic_tdm, CTFLogicTDM);
+
+//-----------------------------------------------------------------------------
+// FT Logic
+//-----------------------------------------------------------------------------
+class CTFLogicFT : public CBaseEntity
+{
+public:
+	DECLARE_CLASS( CTFLogicFT, CBaseEntity );
+	void	Spawn( void );
+};
+
+void CTFLogicFT::Spawn( void )
+{
+	BaseClass::Spawn();
+}
+
+LINK_ENTITY_TO_CLASS( of_logic_ft, CTFLogicFT);
+
 
 //-----------------------------------------------------------------------------
 // JUG Logic 
@@ -1579,7 +1603,6 @@ static const char *s_PreserveEnts[] =
 void CTFGameRules::Activate()
 {
 	SetupMutator();
-
 	SetRetroMode( of_retromode.GetInt() );
 
 	// this is required immediately so bots know what to do
@@ -1694,7 +1717,7 @@ void CTFGameRules::Activate()
 		engine->ServerExecute();
 	}
 	
-	if (gEntList.FindEntityByClassname(NULL, "of_logic_esc") || !Q_strncmp(STRING(gpGlobals->mapname), "esc_", 4) || ( of_payload_override.GetBool() && InGametype( TF_GAMETYPE_PAYLOAD ) ) )
+	if ( gEntList.FindEntityByClassname(NULL, "of_logic_esc") || !Q_strncmp(STRING(gpGlobals->mapname), "esc_", 4) || ( of_payload_override.GetBool() && InGametype( TF_GAMETYPE_PAYLOAD ) ) )
 	{
 		AddGametype(TF_GAMETYPE_ESC);
 		ConColorMsg(Color(86, 156, 143, 255), "[TFGameRules] Executing server Escort gamemode config file\n");
@@ -1707,7 +1730,7 @@ void CTFGameRules::Activate()
 		}
 	}
 
-	if (gEntList.FindEntityByClassname(NULL, "of_logic_dom") || !Q_strncmp(STRING(gpGlobals->mapname), "dom_", 4) )
+	if ( gEntList.FindEntityByClassname(NULL, "of_logic_dom") || !Q_strncmp(STRING(gpGlobals->mapname), "dom_", 4) )
 	{
 		// no Domination gamemode is set in Escort
 		if ( !IsESCGamemode() )
@@ -1726,14 +1749,28 @@ void CTFGameRules::Activate()
 		{
 			if ( TFGameRules()->InGametype( i ) )
 				TFGameRules()->RemoveGametype( i );
-				
+
 		}
 
 		AddGametype( TF_GAMETYPE_INF );
+		AddGametype(TF_GAMETYPE_INF);
 		ConColorMsg(Color(86, 156, 143, 255), "[TFGameRules] Executing server Infection gamemode config file\n");
 		engine->ServerCommand("exec config_default_inf.cfg \n");
 		engine->ServerExecute();
 	}
+
+	// Freeze Tag
+	if ( gEntList.FindEntityByClassname(NULL, "of_logic_ft") || !Q_strncmp(STRING(gpGlobals->mapname), "ft_", 3) || of_freezetag.GetBool() )
+	{
+		AddGametype( TF_GAMETYPE_FT );
+		ConColorMsg(Color(86, 156, 143, 255), "[TFGameRules] Executing server Freeze Tag gamemode config file\n");
+		engine->ServerCommand("exec config_default_ft.cfg \n");
+		engine->ServerExecute();
+	}
+
+	char r[150];
+	V_sprintf_safe(r, "Current game mode: %d", this->m_nGameType.Get());
+	ConColorMsg( Color(86, 156, 143, 255), r );
 
 	m_bAllClass = false;
 	m_bAllClassZombie = false;
@@ -2087,6 +2124,11 @@ bool CTFGameRules::IsInfGamemode( void )
 	return InGametype( TF_GAMETYPE_INF );
 }
 
+bool CTFGameRules::IsFTGamemode( void )
+{
+	return InGametype( TF_GAMETYPE_FT );
+}
+
 bool CTFGameRules::IsJugGamemode( void )
 { 
 	return InGametype( TF_GAMETYPE_JUG );
@@ -2126,6 +2168,8 @@ void CTFGameRules::FireGamemodeOutputs()
 			pProxy->FireGunGameOutput();
 		if ( InGametype( TF_GAMETYPE_JUG ) )
 			pProxy->FireJugOutput();
+		if ( InGametype( TF_GAMETYPE_FT ) )
+			pProxy->FireFTOutput();
 	}
 #endif
 }
@@ -2470,7 +2514,7 @@ void CTFGameRules::SetupOnRoundStart( void )
 	m_bDomBlueLeadThreshold = false;
 	m_bEntityLimitPrevented = false;
 	
-	if ( IsArenaGamemode() )
+	if ( IsArenaGamemode() || IsFTGamemode() )
 	{
 		m_flStalemateStartTime = gpGlobals->curtime;
 	}
@@ -2811,7 +2855,7 @@ void CTFGameRules::SetupOnRoundRunning( void )
 	if ( pArena )
 		pArena->m_ArenaRoundStart.FireOutput( NULL, pArena );
 
-	if ( IsArenaGamemode() )
+	if ( IsArenaGamemode() || IsFTGamemode () )
 		m_flStalemateStartTime = gpGlobals->curtime - tf_stalematechangeclasstime.GetFloat();
 
 	// Let out control point masters know that the round has started
@@ -2870,8 +2914,8 @@ void CTFGameRules::SetupOnStalemateStart( void )
 	// Respawn all the players
 	RespawnPlayers( true );
 
-	// exception for arena
-	if ( InGametype( TF_GAMETYPE_ARENA ) )
+	// exception for arena and freeze tag
+	if ( InGametype( TF_GAMETYPE_ARENA ) || InGametype( TF_GAMETYPE_FT ) )
 	{
 		CTFLogicArena *pArena = dynamic_cast<CTFLogicArena *>( gEntList.FindEntityByClassname( NULL, "tf_logic_arena" ) );
 		if ( pArena )
@@ -3292,11 +3336,12 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 		}
 		else if( pPlayer->ClientCommand( args ) )
 		{
-            return true;
+			return true;
 		}
 
 		return BaseClass::ClientCommand( pEdict, args );
 	}
+
 	// Add the ability to ignore the world trace
 	void CTFGameRules::Think()
 	{
@@ -3360,7 +3405,117 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 				szEmptyDetails[0] = '\0';
 				g_voteController->CreateVote( DEDICATED_SERVER, "nextlevel", szEmptyDetails );
 			}
-			
+
+
+			if ( IsFTGamemode() )
+			{
+				CTFPlayer *frozenPlayer;
+				CTFPlayer *otherPlayer;
+				bool defrostTick;
+
+				// For each player in the server
+				// Check if they're frozen
+				// If they are frozen, iterate through all other players
+				// If the other player isn't frozen, is on the same team and isn't defrosting - then calc distance
+				// If distance <= to of_freezetag_radius, then defrost frozenPlayer
+
+				for ( int i = 0; i <= gpGlobals->maxClients; i++ )
+				{
+					defrostTick = false;
+					frozenPlayer = ToTFPlayer(UTIL_PlayerByIndex(i));
+					if ( frozenPlayer && frozenPlayer->IsFrozen() )
+					{
+						for ( int j = 0; j <= gpGlobals->maxClients; j++ )
+						{
+							otherPlayer = ToTFPlayer(UTIL_PlayerByIndex(j));
+							if ( otherPlayer && (otherPlayer->GetTeamNumber() == frozenPlayer->GetTeamNumber()) && !(otherPlayer->IsFrozen()) && !(otherPlayer->m_Shared.InCond(TF_COND_INVULNERABLE_WEARINGOFF)) )
+							{
+								// For each frozen player, look at all non-frozen players on the map and identify if any of them are within range
+								vec_t distance = frozenPlayer->GetAbsOrigin().DistTo(otherPlayer->GetAbsOrigin());
+								if ( distance <= of_freezetag_radius.GetFloat() )
+								{
+									defrostTick = true;
+									frozenPlayer->m_fDefrostTime -= (gpGlobals->curtime - m_flLastThinkTime);
+									frozenPlayer->m_Shared.AddCond( TF_COND_INVULNERABLE_WEARINGOFF );
+									// frozenPlayer is in the middle of an active defrosting
+									if ( frozenPlayer->m_fDefrostTime <= 0 )
+									{
+										frozenPlayer->StateLeaveFrozen();
+										break;
+									}
+									// Two players does not mean frozenPlayer gets defrosted half as quick!
+									break;
+								}
+							}
+						}
+						if ( !defrostTick )
+						{
+							frozenPlayer->m_Shared.RemoveCond(TF_COND_INVULNERABLE_WEARINGOFF);
+							frozenPlayer->m_fDefrostTime = of_freezetag_time.GetFloat();
+						}
+					}
+				}
+
+				// Win logic jacked from Arena mode
+				if ( CountActivePlayers() > 1 && State_Get() == GR_STATE_RND_RUNNING )
+				{
+					int iDeadTeam = TEAM_UNASSIGNED;
+					int iAliveTeam = TEAM_UNASSIGNED;
+
+					// If a team is fully killed, the other team has won
+					for ( int i = LAST_SHARED_TEAM+1; i < GetNumberOfTeams(); i++ )
+					{
+						CTeam *pTeam = GetGlobalTeam(i);
+						Assert( pTeam );
+						if ( !pTeam )
+							continue;
+						int iPlayers = pTeam->GetNumPlayers();
+						if ( iPlayers )
+						{
+							int bFoundLiveOne = 0;
+							for ( int player = 0; player < iPlayers; player++ )
+							{
+								// TODO - JL
+								if ( !( pTeam->GetPlayer(player) && ToTFPlayer(pTeam->GetPlayer(player))->IsFrozen() ))
+								{
+									bFoundLiveOne++;
+									if ( pTeam->GetTeamNumber() != TF_TEAM_MERCENARY )
+										break;
+								}
+							}
+							if ( pTeam->GetTeamNumber() == TF_TEAM_MERCENARY  )
+							{
+								if ( bFoundLiveOne <= 1 )
+								{
+									iAliveTeam = i;
+									iDeadTeam = i;
+									break;
+								}
+								else
+									iAliveTeam = i;
+							}
+							else
+							{
+								if ( bFoundLiveOne > 0 )
+								{
+									iAliveTeam = i;
+								}
+								else
+								{
+									iDeadTeam = i;
+								}
+							}							
+						}
+					}
+
+					if ( iDeadTeam && iAliveTeam )
+					{					
+						SetWinningTeam( iAliveTeam, WINREASON_OPPONENTS_DEAD, m_bForceMapReset );
+					}
+				}
+			}
+
+
 			if ( IsArenaGamemode() )
 			{
 				if ( CountActivePlayers() > 1 && State_Get() == GR_STATE_RND_RUNNING )
@@ -3381,7 +3536,7 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 							int bFoundLiveOne = 0;
 							for ( int player = 0; player < iPlayers; player++ )
 							{
-								if ( pTeam->GetPlayer(player) && pTeam->GetPlayer(player)->IsAlive())
+								if ( pTeam->GetPlayer(player) && pTeam->GetPlayer(player)->IsAlive() )
 								{
 									bFoundLiveOne++;
 									if ( pTeam->GetTeamNumber() != TF_TEAM_MERCENARY )
@@ -3494,6 +3649,7 @@ void CTFGameRules::RadiusDamage( const CTakeDamageInfo &info, const Vector &vecS
 			EntityLimitPrevention();
 		
 		BaseClass::Think();
+		m_flLastThinkTime = gpGlobals->curtime;
 	}
 	// entity limit measures, if we are above 1950 then start clearing out entities 
 	// this really only happens with >24 players on large maps such as tc_hydro	
@@ -4397,7 +4553,7 @@ bool CTFGameRules::IsSpawnPointValid( CBaseEntity *pSpot, CBasePlayer *pPlayer, 
 {
 	// WTFWTF 
 
-    // zombies can spawn everywhere
+	// zombies can spawn everywhere
 	if ( TFGameRules()->IsInfGamemode() && pPlayer->GetTeamNumber() == TF_TEAM_BLUE )
 	{
 	}
@@ -4811,14 +4967,14 @@ void CTFGameRules::GetTaggedConVarList( KeyValues *pCvarTagList )
 
 	pCvarTagList->AddSubKey( pKeyValues );	
 	
-		// tf_use_fixed_weaponspreads   
+		// tf_use_fixed_weaponspreads
 	pKeyValues = new KeyValues( "tf_use_fixed_weaponspreads" );
 	pKeyValues->SetString( "convar", "tf_use_fixed_weaponspreads" );
 	pKeyValues->SetString( "tag", "norandomspread" );
 
 	pCvarTagList->AddSubKey( pKeyValues );		
 
-		// tf_birthday    
+		// tf_birthday
 	pKeyValues = new KeyValues( "tf_birthday" );
 	pKeyValues->SetString( "convar", "tf_birthday" );
 	pKeyValues->SetString( "tag", "birthday" );
@@ -6823,6 +6979,8 @@ const wchar_t *CTFGameRules::GetLocalizedGameTypeName( void )
 		else
 			GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_DM]);
 	}
+	if ( TFGameRules()->InGametype( TF_GAMETYPE_FT ) )
+		GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_FT]);
 	if ( TFGameRules()->InGametype( TF_GAMETYPE_CP ) )
 		GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_CP]);
 	if ( TFGameRules()->InGametype( TF_GAMETYPE_CTF ) )
@@ -6839,6 +6997,8 @@ const wchar_t *CTFGameRules::GetLocalizedGameTypeName( void )
 		GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_INF]);
 	if ( TFGameRules()->InGametype( TF_GAMETYPE_JUG) )
 		GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_JUG]);
+	if (TFGameRules()->InGametype(TF_GAMETYPE_FT))
+		GameType = g_pVGuiLocalize->Find(g_aGameTypeNames[TF_GAMETYPE_FT]);
 	return GameType;
 }
 

@@ -74,7 +74,9 @@ const char *g_aGameTypeNames_NonLocalized[] = // Move me?
 	"Domination",                 
 	"Gun Game",                   
 	"3 Wave",                     
-	"Infection",                  
+	"Infection",
+	"Juggernaught",
+	"Freeze Tag"
 };                                
                                   
 CTFDiscordRPC g_discordrpc;      

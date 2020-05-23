@@ -577,7 +577,7 @@ void CTFSniperRifle::SetRezoom( bool bRezoom, float flDelay )
 float CTFSniperRifle::GetProjectileDamage( void )
 {
 	// Uncharged? Min damage.
-	return max( m_flChargedDamage, GetDamage() );
+	return max(m_flChargedDamage, GetDamage());
 }
 
 //-----------------------------------------------------------------------------

@@ -270,6 +270,7 @@ void CTFGameMovement::ProcessMovement( CBasePlayer *pBasePlayer, CMoveData *pMov
 
 	// The max speed is currently set to the demoman charge - if this changes we need to change this!
 	mv->m_flMaxSpeed = tf_maxspeed.GetFloat() <= 0.0f ? 100000.0f : tf_maxspeed.GetFloat();
+    int iMutator8 = m_pVoteParameterList->AddItem(0, pMutator8);
 
 	// Run the command.
 	if (m_pTFPlayer->m_Shared.InCond( TF_COND_SHIELD_CHARGE ))

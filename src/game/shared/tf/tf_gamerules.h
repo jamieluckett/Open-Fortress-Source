@@ -104,13 +104,15 @@ public:
 	COutputEvent m_OutputIsTeamplay;
 	COutputEvent m_OutputIsGunGame;
 	COutputEvent m_OutputIsJug;
-	
+	COutputEvent m_OutputIsFT;
+
 	void	FireCTFOutput(void) {m_OutputIsCTF.FireOutput(NULL,this);}
 	void	FireCPOutput(void) {m_OutputIsCP.FireOutput(NULL,this);}
 	void	FireDMOutput(void) {m_OutputIsDM.FireOutput(NULL,this);}
 	void	FireTeamplayOutput(void) {m_OutputIsTeamplay.FireOutput(NULL,this);}
 	void	FireGunGameOutput(void) {m_OutputIsGunGame.FireOutput(NULL,this);}
 	void	FireJugOutput(void) {m_OutputIsJug.FireOutput(NULL,this);}
+	void	FireFTOutput(void) {m_OutputIsFT.FireOutput(NULL, this);}
 #endif
 };
 
@@ -519,6 +521,8 @@ private:
 	int				m_nZombiesToSpawn;
 	Vector			m_vecMobSpawnLocation;
 	bool			m_bFirstBlood;
+    float			m_flLastThinkTime;
+
 #endif
 
 private:
@@ -626,6 +630,7 @@ public:
 	bool	IsZSGamemode(void);
 	bool	IsInfGamemode(void);
 	bool	IsJugGamemode(void);
+	bool	IsFTGamemode(void);
 	bool	IsPayloadOverride(void);
 	bool	Force3DSkybox(void) { return m_bForce3DSkybox; }
 	bool	IsFreeRoam(void); // this is used for bots

@@ -243,8 +243,9 @@ enum
 	TF_GAMETYPE_3WAVE, // 3 Wave
 	TF_GAMETYPE_INF, // Infection
 	TF_GAMETYPE_JUG, // Juggernaught
+    TF_GAMETYPE_FT, // Freeze Tag
 
-	TF_GAMETYPE_LAST
+    TF_GAMETYPE_LAST
 };
 
 extern const char *g_aGameTypeNames[];	// localized gametype names
@@ -731,6 +732,7 @@ enum
 	TF_STATE_WELCOME,			// First entering the server (shows level intro screen).
 	TF_STATE_OBSERVER,			// Game observer mode.
 	TF_STATE_DYING,				// Player is dying.
+	TF_STATE_FROZEN,			// Player is frozen (Freeze Tag)
 	TF_STATE_COUNT
 };
 
